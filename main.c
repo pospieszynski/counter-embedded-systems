@@ -1,5 +1,6 @@
 #define LEFT_MODULE (1<<28)
 #define RIGHT_MODULE (1<<30)
+#define BRIGHTNESS 1<<29
 #define SEGMENT_A (1<<25)
 #define SEGMENT_B (1<<24)
 #define SEGMENT_C (1<<22)
@@ -19,7 +20,7 @@
 #define EIGHT (SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G)
 #define NINE (SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_G | SEGMENT_F)
 
-#define DELAY 50000
+#define DELAY 10
 
 
 void dbgu_print_ascii(const char *a) {}
@@ -28,6 +29,8 @@ void setNumber(int no);
 void clearNumber(int digit);
 void enableRightLED();
 void enableLeftLED();
+void initBrightness();
+void clearAllSegments();
 void delay();
 
 volatile unsigned int* PIO_PER = (volatile unsigned int*)0xFFFFF400;
@@ -45,8 +48,8 @@ int main(){
     initLED();
     enableRightLED();
 	
-    volatile unsigned int j = 0;
-      volatile unsigned int k = 0;
+    unsigned int j = 0;
+     volatile unsigned int k = 0;
 	
 // 	while(1){
 // 	  setNumber(j%10);
@@ -55,29 +58,31 @@ int main(){
 // 	  j++;
 // 	}
 	
-unsigned int outer_iterator = 0;
 	
 int i;
 
 	while(1){
 
-		for(i = 0; i<50000; i++){
+		for(i = 0; i<10000; i++){
 			
-setNumber(j%10);
-enableRightLED();
-			
-			
+			setNumber(j%10);
+			enableRightLED();
+			for(k = 0; k < 10; k++){}
+
 			disableRightLED();
-clearNumber(j%10);
-setNumber(j/10);
+			clearNumber(j%10);
+			
+			setNumber(j/10);
 
 			enableLeftLED();
-					disableLeftLED();
+			for(k = 0; k < 10; k++){}
+			disableLeftLED();
 			clearNumber(j/10);
-	
+
 		}
-			if(j==99) j=0;
+			
 			j++;
+			if(j==100) j=0;
 			delay();
 		}
 	
@@ -182,42 +187,49 @@ void clearNumber(int digit){
 
 
 void initLED(){
+
+  clearAllSegments();
+
   *PIO_PER = LEFT_MODULE;
   *PIO_OER = LEFT_MODULE;
-    *PIO_SODR = LEFT_MODULE;
+  *PIO_SODR = LEFT_MODULE;
   
   *PIO_PER = RIGHT_MODULE;
   *PIO_OER = RIGHT_MODULE;
   *PIO_SODR =  RIGHT_MODULE;
   
-  *PIO_PER = ZERO;
-  *PIO_OER = ZERO;
+  *PIO_PER = SEGMENT_A;
+  *PIO_OER = SEGMENT_A;
 
-  *PIO_PER = ONE;
-  *PIO_OER = ONE;
+  *PIO_PER = SEGMENT_B;
+  *PIO_OER = SEGMENT_B;
 
-  *PIO_PER = TWO;
-  *PIO_OER = TWO;
+  *PIO_PER = SEGMENT_C;
+  *PIO_OER = SEGMENT_C;
 
-  *PIO_PER = THREE;
-  *PIO_OER = THREE;
+  *PIO_PER = SEGMENT_D;
+  *PIO_OER = SEGMENT_D;
 
-  *PIO_PER = FOUR;
-  *PIO_OER = FOUR;
+  *PIO_PER = SEGMENT_E;
+  *PIO_OER = SEGMENT_E;
 
-  *PIO_PER = FIVE;
-  *PIO_OER = FIVE;
+  *PIO_PER = SEGMENT_F;
+  *PIO_OER = SEGMENT_F;
 
-  *PIO_PER = SIX;
-  *PIO_OER = SIX;
+  *PIO_PER = SEGMENT_G;
+  *PIO_OER = SEGMENT_G;
 
-  *PIO_PER = SEVEN;
-  *PIO_OER = SEVEN;
+  initBrightness();
+}
 
-  *PIO_PER = EIGHT;
-  *PIO_OER = EIGHT;
+void initBrightness(){
+	*PIO_PER = BRIGHTNESS;
+	*PIO_OER = BRIGHTNESS;
+	*PIO_CODR =  BRIGHTNESS;
+}
 
-  *PIO_PER = NINE;
-  *PIO_OER = NINE;
-  
+void clearAllSegments(){
+ *PIO_PER = SEGMENT_A | SEGMENT_B| SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G;
+ *PIO_OER = SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G;
+ *PIO_CODR = SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G;
 }
