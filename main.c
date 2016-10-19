@@ -19,7 +19,7 @@
 #define EIGHT (SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G)
 #define NINE (SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_G | SEGMENT_F)
 
-#define DELAY 100000
+#define DELAY 50000
 
 
 void dbgu_print_ascii(const char *a) {}
@@ -55,24 +55,31 @@ int main(){
 // 	  j++;
 // 	}
 	
+unsigned int outer_iterator = 0;
 	
+int i;
+
 	while(1){
-	  enableRightLED();
-	  setNumber(j%10);
-	  delay();
-	  clearNumber(j%10);
-	  disableRightLED();
-	  if(j>9){
-	    enableLeftLED();
-	     setNumber(j/10);
-	     delay();
-	     clearNumber(j/10);
-	     disableLeftLED();
-	  }
-	  if(k%999999)j++;
-	  k++;
-	  if(j==100) j=0;
-	}
+
+		for(i = 0; i<50000; i++){
+			
+setNumber(j%10);
+enableRightLED();
+			
+			
+			disableRightLED();
+clearNumber(j%10);
+setNumber(j/10);
+
+			enableLeftLED();
+					disableLeftLED();
+			clearNumber(j/10);
+	
+		}
+			if(j==99) j=0;
+			j++;
+			delay();
+		}
 	
 	
 	while(1);
