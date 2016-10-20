@@ -1,6 +1,6 @@
-#define LEFT_MODULE (1<<28)
-#define RIGHT_MODULE (1<<30)
 #define BRIGHTNESS 1<<29
+#define LEFT_MODULE 1<<28
+#define RIGHT_MODULE 1<<30
 #define SEGMENT_A (1<<25)
 #define SEGMENT_B (1<<24)
 #define SEGMENT_C (1<<22)
@@ -21,80 +21,42 @@
 #define NINE (SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_G | SEGMENT_F)
 
 #define DELAY 10
+#define DISPLAY_DIGIT_COUNT 10000
+#define LIMIT 100
 
 
 void dbgu_print_ascii(const char *a) {}
-void initLED();
-void setNumber(int no);
-void clearNumber(int digit);
-void enableRightLED();
-void enableLeftLED();
+
+void initDisplay();
+void initSegments();
+void initLeftModule();
+void initRightModule();
 void initBrightness();
+void enableRightDigit();
+void enableLeftDigit();
+void disableRightLED();
+void disableLeftLED();
+void setDigit(int no);
 void clearAllSegments();
 void delay();
+void count();
 
 volatile unsigned int* PIO_PER = (volatile unsigned int*)0xFFFFF400;
 volatile unsigned int* PIO_OER = (volatile unsigned int*)0xFFFFF410;
 volatile unsigned int* PIO_SODR = (volatile unsigned int*)0xFFFFF430;
 volatile unsigned int* PIO_CODR = (volatile unsigned int*)0xFFFFF434;
 
-
-void disableRightLED();
-
-void disableLeftLED();
-
 int main(){ 
-
-    initLED();
-    enableRightLED();
-	
-    unsigned int j = 0;
-     volatile unsigned int k = 0;
-	
-// 	while(1){
-// 	  setNumber(j%10);
-// 	  delay();
-// 	  clearNumber(j%10);
-// 	  j++;
-// 	}
-	
-	
-int i;
-
-	while(1){
-
-		for(i = 0; i<10000; i++){
-			
-			setNumber(j%10);
-			enableRightLED();
-			for(k = 0; k < 10; k++){}
-
-			disableRightLED();
-			clearNumber(j%10);
-			
-			setNumber(j/10);
-
-			enableLeftLED();
-			for(k = 0; k < 10; k++){}
-			disableLeftLED();
-			clearNumber(j/10);
-
-		}
-			
-			j++;
-			if(j==100) j=0;
-			delay();
-		}
-	
-	
-	while(1);
+  initDisplay();
+  count();
+  while(1);
 }
 
-void enableRightLED(){
+void enableRightDigit(){
   *PIO_CODR = RIGHT_MODULE;
 }
 
-void enableLeftLED(){
+void enableLeftDigit(){
   *PIO_CODR = LEFT_MODULE;
 }
 
@@ -107,12 +69,12 @@ void disableLeftLED(){
 }
 
 
-void delay(){
-	volatile unsigned int outer_iterator = 0;
-	for(outer_iterator = 0; outer_iterator < DELAY; outer_iterator++){}
+void delay(unsigned int delay){
+	volatile unsigned int iterator;
+	for(iterator = 0; iterator < delay; iterator++){}
 }
 
-void setNumber(int digit){
+void setDigit(int digit){
   
 	switch(digit){
 	  case 0:
@@ -148,56 +110,25 @@ void setNumber(int digit){
 	}
 }
 
-
-void clearNumber(int digit){
-  
-	switch(digit){
-	  case 0:
-	    *PIO_CODR = ZERO;
-	    break;
-	  case 1:
-	    *PIO_CODR = ONE;
-	  break;
-	  case 2:
-	    *PIO_CODR = TWO;
-	    break;
-	  case 3:
-	    *PIO_CODR = THREE;
-	    break;
-	  case 4:
-	    *PIO_CODR = FOUR;
-	    break;
-	  case 5:
-	    *PIO_CODR = FIVE;
-	    break;
-	  case 6:
-	    *PIO_CODR = SIX;
-	    break;
-	  case 7:
-	    *PIO_CODR = SEVEN;
-	    break;
-	  case 8:
-	    *PIO_CODR = EIGHT;
-	    break;
-	  case 9:
-	    *PIO_CODR = NINE;
-	    break;
-	}
+void initDisplay(){
+  initLeftModule();
+  initRightModule();
+  initSegments();
+  clearAllSegments();
+  initBrightness();
 }
 
+void initBrightness(){
+  *PIO_PER = BRIGHTNESS;
+  *PIO_OER = BRIGHTNESS;
+  *PIO_CODR =  BRIGHTNESS;
+}
 
-void initLED(){
+void clearAllSegments(){
+  *PIO_CODR = EIGHT;
+}
 
-  clearAllSegments();
-
-  *PIO_PER = LEFT_MODULE;
-  *PIO_OER = LEFT_MODULE;
-  *PIO_SODR = LEFT_MODULE;
-  
-  *PIO_PER = RIGHT_MODULE;
-  *PIO_OER = RIGHT_MODULE;
-  *PIO_SODR =  RIGHT_MODULE;
-  
+void initSegments(){
   *PIO_PER = SEGMENT_A;
   *PIO_OER = SEGMENT_A;
 
@@ -218,18 +149,50 @@ void initLED(){
 
   *PIO_PER = SEGMENT_G;
   *PIO_OER = SEGMENT_G;
-
-  initBrightness();
 }
 
-void initBrightness(){
-	*PIO_PER = BRIGHTNESS;
-	*PIO_OER = BRIGHTNESS;
-	*PIO_CODR =  BRIGHTNESS;
+void initLeftModule(){
+  *PIO_PER = LEFT_MODULE;
+  *PIO_OER = LEFT_MODULE;
+  *PIO_SODR = LEFT_MODULE;
 }
 
-void clearAllSegments(){
- *PIO_PER = SEGMENT_A | SEGMENT_B| SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G;
- *PIO_OER = SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G;
- *PIO_CODR = SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G;
+void initRightModule(){
+  *PIO_PER = RIGHT_MODULE;
+  *PIO_OER = RIGHT_MODULE;
+  *PIO_SODR =  RIGHT_MODULE;
+}
+
+void count(){
+
+  unsigned int NumberToBeDisplayed = 0;	
+  unsigned int CountSingleDigitDisplay;
+
+	while(1){
+
+		for(CountSingleDigitDisplay = 0; CountSingleDigitDisplay < DISPLAY_DIGIT_COUNT; CountSingleDigitDisplay++){
+			
+			setDigit(NumberToBeDisplayed%10);
+			enableRightDigit();
+
+			delay(DELAY);
+
+			disableRightLED();
+			clearAllSegments();
+			
+			setDigit(NumberToBeDisplayed/10);
+
+			enableLeftDigit();
+
+			delay(DELAY);
+
+			disableLeftLED();
+			clearAllSegments();
+
+		}
+			NumberToBeDisplayed++;
+			if( NumberToBeDisplayed == LIMIT ) NumberToBeDisplayed = 0;
+			delay(DELAY);
+	}
+
 }
